@@ -19,6 +19,23 @@ export default function CommandCenter() {
     ? verifiedAlerts 
     : dismissedAlerts;
 
+  // IST Formatter Utility
+  const formatToIST = (dateString) => {
+    if (!dateString) return '--:--:--';
+    let date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+        const today = new Date().toISOString().split('T')[0];
+        date = new Date(`${today}T${dateString}`);
+    }
+    return new Intl.DateTimeFormat('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    }).format(date);
+  };
+
   return (
     <div className="dashboard-container">
       <div className="header" style={{marginBottom: '1rem'}}>
@@ -92,7 +109,7 @@ export default function CommandCenter() {
           </div>
         ) : (
           filteredAlerts.map((alert) => (
-            <AlertCard key={alert.id} alert={alert} verifyAlert={verifyAlert} dismissAlert={dismissAlert} />
+            <AlertCard key={alert.id} alert={alert} verifyAlert={verifyAlert} dismissAlert={dismissAlert} formatToIST={formatToIST} />
           ))
         )}
       </div>
@@ -100,7 +117,7 @@ export default function CommandCenter() {
   );
 }
 
-function AlertCard({ alert, verifyAlert, dismissAlert }) {
+function AlertCard({ alert, verifyAlert, dismissAlert, formatToIST }) {
   const [severity, setSeverity] = useState(alert.severity);
   const [impact, setImpact] = useState('Significant');
   const [timeLeft, setTimeLeft] = useState('');
@@ -154,7 +171,10 @@ function AlertCard({ alert, verifyAlert, dismissAlert }) {
               <Clock size={14}/> AUTO-DISPATCH IN: {timeLeft}
             </div>
           )}
-          <span style={{fontSize: '0.8rem', color: 'var(--text-muted)'}}>{alert.time}</span>
+          {alert.eta_minutes && (
+            <div style={{color: '#10b981', fontWeight: 'bold', fontSize: '0.85rem'}}>ETA: {alert.eta_minutes} MIN</div>
+          )}
+          <span style={{fontSize: '0.8rem', color: 'var(--text-muted)'}}>{formatToIST(alert.created_at || alert.time)}</span>
         </div>
       </div>
 

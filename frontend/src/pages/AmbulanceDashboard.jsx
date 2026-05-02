@@ -115,6 +115,32 @@ export default function AmbulanceDashboard() {
   const driverStatus = activeAlert ? activeAlert.ambulanceStatus : 'idle';
   
   // Logic to handle 0 distance when at scene or hospital
+  // IST Formatter Utility
+  const formatToIST = (dateString) => {
+    if (!dateString) return '--:--:--';
+    return new Intl.DateTimeFormat('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    }).format(new Date(dateString));
+  };
+
+  useEffect(() => {
+    if (!activeAlert || !routeInfo.time || routeInfo.time === '0') return;
+    
+    // Sync ETA with backend every time it changes
+    const syncETA = async () => {
+      try {
+        await axios.post(`http://localhost:8000/api/v1/emergency/incident/${activeAlert.id}/eta?eta=${routeInfo.time}`);
+      } catch (err) {}
+    };
+    
+    const timer = setTimeout(syncETA, 2000); // Debounce to avoid spamming
+    return () => clearTimeout(timer);
+  }, [routeInfo.time, activeAlert?.id]);
+
   const handleStatusUpdate = (alertId, newStatus) => {
     updateAmbulanceStatus(alertId, newStatus);
     if (newStatus === 'onscene' || newStatus === 'arrived_hospital') {
@@ -125,7 +151,7 @@ export default function AmbulanceDashboard() {
   const isNavigating = driverStatus === 'accepted' || driverStatus === 'onscene' || driverStatus === 'enroute' || driverStatus === 'arrived_hospital';
   const isReturning = driverStatus === 'enroute' || driverStatus === 'arrived_hospital';
   
-  const hospitalCoords = [28.6139, 77.2090];
+  const hospitalCoords = [user?.hospital_lat || 28.6139, user?.hospital_lng || 77.2090];
   const destination = isReturning ? hospitalCoords : activeAlert ? [activeAlert.locationRaw.lat, activeAlert.locationRaw.lng] : null;
   const destName = isReturning ? user?.hospital_name || "City General Hospital" : activeAlert?.location?.split(',')[0];
 

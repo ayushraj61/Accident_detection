@@ -196,13 +196,30 @@ export function AlertProvider({ children }) {
     }).catch(() => {});
   }, []);
 
-  const assignAmbulances = useCallback((alertId, ambulanceIds) => {
-    setAlerts(prev => prev.map(a => a.id === alertId ? { ...a, status: 'dispatched', ambulanceStatus: 'dispatched', hospitalStatus: 'inbound' } : a));
-    fetch('http://localhost:8000/api/v1/emergency/assign-ambulances', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ alert_id: alertId, ambulance_ids: ambulanceIds }),
-    }).catch(() => {});
+  const assignAmbulances = useCallback(async (alertId, ambulanceIds, hospitalId) => {
+    try {
+      const response = await fetch('http://localhost:8000/api/v1/emergency/assign-ambulances', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ alert_id: alertId, ambulance_ids: ambulanceIds, hospital_id: hospitalId }),
+      });
+      const data = await response.json();
+      
+      if (data.status === 'error') {
+        alert(`❌ DISPATCH FAILED: ${data.message}`);
+        return;
+      }
+      
+      setAlerts(prev => prev.map(a => a.id === alertId ? { 
+        ...a, 
+        status: 'dispatched', 
+        ambulanceStatus: 'dispatched', 
+        hospitalStatus: 'inbound',
+        hospital_id: hospitalId 
+      } : a));
+    } catch (err) {
+      console.error("[Alerts] Fleet assignment failed:", err);
+    }
   }, []);
 
   const value = {

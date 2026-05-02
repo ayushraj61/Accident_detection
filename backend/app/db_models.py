@@ -75,6 +75,7 @@ class Incident(Base):
     hospital_status = Column(String, default="notified")
     
     hospital_id = Column(Integer, ForeignKey("hospitals.id"), nullable=True)
+    eta_minutes = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     auto_dispatch_at = Column(DateTime, nullable=True) # Timestamp for auto-verify
     resolved_at = Column(DateTime, nullable=True)

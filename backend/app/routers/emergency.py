@@ -82,20 +82,31 @@ def get_incidents(db: Session = Depends(database.get_db)):
 async def assign_ambulances(payload: dict, db: Session = Depends(database.get_db)):
     try:
         alert_id = payload.get("alert_id")
+        hospital_id = payload.get("hospital_id")
         raw_ids = payload.get("ambulance_ids", [])
         ambulance_ids = [int(aid) for aid in raw_ids if aid is not None]
+        
         incident = db.query(db_models.Incident).filter(db_models.Incident.id == alert_id).first()
         if not incident: return {"status": "error", "message": "Incident not found"}
+        
+        # 🛡️ SECURITY CHECK: Is this case already claimed?
+        if incident.status == "dispatched" or incident.assigned_fleet:
+             return {"status": "error", "message": "This case has already been claimed by another hospital."}
+             
         ambs = db.query(db_models.Ambulance).filter(db_models.Ambulance.id.in_(ambulance_ids)).all()
         amb_names = [a.unit_name for a in ambs]
         for a in ambs: a.is_available = False
+        
         incident.status = "dispatched"
+        incident.hospital_id = hospital_id
         incident.assigned_fleet = ",".join(amb_names)
         incident.hospital_status = "inbound"
         db.commit()
+        
         await manager.broadcast({
             "event": "AMBULANCE_ASSIGNED",
             "alert_id": alert_id,
+            "hospital_id": hospital_id,
             "ambulance_ids": ambulance_ids,
             "ambulance_names": amb_names,
             "status": "dispatched"
@@ -139,6 +150,22 @@ async def discharge_patient(payload: dict, db: Session = Depends(database.get_db
         await manager.broadcast({"event": "CASE_RESOLVED", "alert_id": alert_id})
         return {"status": "success"}
     return {"status": "error"}
+
+@router.post("/incident/{incident_id}/eta")
+async def update_incident_eta(incident_id: str, eta: int, db: Session = Depends(database.get_db)):
+    incident = db.query(db_models.Incident).filter(db_models.Incident.id == incident_id).first()
+    if not incident:
+        raise HTTPException(status_code=404, detail="Incident not found")
+    
+    incident.eta_minutes = eta
+    db.commit()
+    
+    # Broadcast update to all listeners
+    await manager.broadcast({
+        "type": "INCIDENT_UPDATED",
+        "incident": schemas.IncidentResponse.from_orm(incident).model_dump()
+    })
+    return {"status": "updated"}
 
 @router.post("/ambulance/status")
 async def update_ambulance_status(payload: dict, db: Session = Depends(database.get_db)):

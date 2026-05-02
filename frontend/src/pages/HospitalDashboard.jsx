@@ -41,7 +41,8 @@ export default function HospitalDashboard() {
   };
 
   // Logic for filtering alerts
-  const myAlerts = alerts.filter(a => a.hospital_id === user?.id && a.status !== 'resolved');
+  // Logic for filtering alerts: Show alerts assigned to ME or alerts that are UNCLAIMED (null)
+  const myAlerts = alerts.filter(a => (a.hospital_id === user?.id || !a.hospital_id) && a.status !== 'resolved');
   
   const newAlerts = myAlerts.filter(a => (a.hospitalStatus === 'notified' || a.status === 'verified') && a.status !== 'dispatched' && (a.dispatched_ambulance_names || []).length === 0);
   const ongoingAlerts = myAlerts.filter(a => (a.status === 'dispatched' || a.hospitalStatus === 'inbound' || (a.dispatched_ambulance_names || []).length > 0) && a.hospitalStatus !== 'admitted');
@@ -53,6 +54,24 @@ export default function HospitalDashboard() {
     const current = selectedAmbs[caseId] || [];
     const updated = current.includes(ambId) ? current.filter(id => id !== ambId) : [...current, ambId];
     setSelectedAmbs({...selectedAmbs, [caseId]: updated});
+  };
+
+  // IST Formatter Utility
+  const formatToIST = (dateString) => {
+    if (!dateString) return '--:--:--';
+    // If it's just a time string like "13:47:24", we treat it as today
+    let date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+        const today = new Date().toISOString().split('T')[0];
+        date = new Date(`${today}T${dateString}`);
+    }
+    return new Intl.DateTimeFormat('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    }).format(date);
   };
 
   return (
@@ -106,10 +125,14 @@ export default function HospitalDashboard() {
                   <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '1rem'}}>
                     <div>
                       <h3 style={{color: 'white', fontSize: '1.1rem'}}>🚨 {patient.severity} TRAUMA DETECTED</h3>
-                      <p style={{fontSize: '0.8rem', color: 'var(--text-muted)'}}>Case ID: {patient.id.substring(0,12)} | {patient.time}</p>
+                      <p style={{fontSize: '0.8rem', color: 'var(--text-muted)'}}>Case ID: {patient.id.substring(0,12)} | {formatToIST(patient.created_at || patient.time)}</p>
                     </div>
                     <div style={{textAlign: 'right'}}>
-                       <div style={{fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--accent-red)'}}>ETA: ~8 Min</div>
+                       {viewFilter === 'ongoing' && (
+                         <div style={{fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--accent-red)'}}>
+                          {patient.eta_minutes ? `ETA: ${patient.eta_minutes} MIN` : 'Calculating...'}
+                         </div>
+                       )}
                     </div>
                   </div>
 
@@ -175,7 +198,7 @@ export default function HospitalDashboard() {
                           className="primary" style={{width: '100%', marginTop: '1rem', height: '45px'}} 
                           disabled={!(selectedAmbs[patient.id] || []).length}
                           onClick={() => { 
-                            assignAmbulances(patient.id, selectedAmbs[patient.id]); 
+                            assignAmbulances(patient.id, selectedAmbs[patient.id], user?.id); 
                             setOpenDropdown(null);
                             setTimeout(fetchAmbulances, 500); 
                           }}>

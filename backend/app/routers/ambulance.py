@@ -26,6 +26,8 @@ def read_ambulance_me(ambulance: db_models.Ambulance = Depends(get_current_ambul
         "unit_code": ambulance.unit_code,
         "hospital_id": ambulance.hospital_id,
         "hospital_name": ambulance.hospital.name,
+        "hospital_lat": ambulance.hospital.lat,
+        "hospital_lng": ambulance.hospital.lng,
         "lat": ambulance.lat,
         "lng": ambulance.lng,
         "role": "ambulance"
