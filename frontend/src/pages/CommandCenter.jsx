@@ -127,7 +127,10 @@ function AlertCard({ alert, verifyAlert, dismissAlert, formatToIST }) {
   const borderColor = isVerified ? '#10b981' : isDismissed ? '#6b7280' : '#ef4444';
 
   useEffect(() => {
-    if (alert.status !== 'pending' || !alert.auto_dispatch_at) return;
+    if (alert.status !== 'pending' || !alert.auto_dispatch_at) {
+      setTimeLeft('--:--');
+      return;
+    }
     
     const interval = setInterval(() => {
       const now = new Date().getTime();
@@ -135,12 +138,12 @@ function AlertCard({ alert, verifyAlert, dismissAlert, formatToIST }) {
       const diff = expiry - now;
       
       if (diff <= 0) {
-        setTimeLeft('EXPIRED');
+        setTimeLeft('DISPATCHING...');
         clearInterval(interval);
       } else {
         const mins = Math.floor(diff / 60000);
         const secs = Math.floor((diff % 60000) / 1000);
-        setTimeLeft(`${mins}:${secs < 10 ? '0' : ''}${secs}`);
+        setTimeLeft(`${mins}m ${secs < 10 ? '0' : ''}${secs}s`);
       }
     }, 1000);
     

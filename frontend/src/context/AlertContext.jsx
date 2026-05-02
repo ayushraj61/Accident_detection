@@ -18,6 +18,7 @@ export function AlertProvider({ children }) {
 
   const fetchInitial = useCallback(async () => {
       try {
+        // 1. Fetch Incidents
         const res = await fetch('http://localhost:8000/api/v1/emergency/incidents');
         const data = await res.json();
         const formatted = data.map(alert => {
@@ -42,13 +43,31 @@ export function AlertProvider({ children }) {
             ambulanceStatus: alert.ambulance_status || 'idle',
             hospitalStatus: alert.hospital_status || 'notified',
             impact_scale: alert.impact_scale,
-            incident_type: alert.incident_type
+            incident_type: alert.incident_type,
+            auto_dispatch_at: alert.auto_dispatch_at
           };
         });
         setAlerts(formatted.filter(a => a.status !== 'resolved'));
+
+        // 2. Fetch Admin Settings
+        const adminRes = await fetch('http://localhost:8000/api/v1/emergency/incidents'); // Reuse a broad query or add specific
+        // For now, we'll just set it to 2 by default unless we add a dedicated GET /admin/settings
       } catch (err) {
         console.error("Failed to fetch initial incidents", err);
       }
+  }, []);
+
+  const updateAdminSettings = useCallback(async (newSettings) => {
+    setAdminSettings(prev => ({ ...prev, ...newSettings }));
+    try {
+      await fetch('http://localhost:8000/api/v1/emergency/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newSettings),
+      });
+    } catch (err) {
+      console.error("Failed to save admin settings", err);
+    }
   }, []);
 
   useEffect(() => {
@@ -84,7 +103,8 @@ export function AlertProvider({ children }) {
               hospitalStatus: 'notified',
               dispatched_ambulance_names: [],
               impact_scale: alert.impact_scale,
-              incident_type: alert.incident_type
+              incident_type: alert.incident_type,
+              auto_dispatch_at: alert.auto_dispatch_at
             };
             audioRef.current.play().catch(() => {});
             setAlerts(prev => [newAlert, ...prev]);
@@ -94,7 +114,8 @@ export function AlertProvider({ children }) {
                 ...a,
                 ambulanceStatus: updated.ambulance_status || a.ambulanceStatus,
                 hospitalStatus: updated.hospital_status || a.hospitalStatus,
-                eta_minutes: updated.eta_minutes
+                eta_minutes: updated.eta_minutes,
+                auto_dispatch_at: updated.auto_dispatch_at || a.auto_dispatch_at
             } : a));
           } else if (payload.event === 'DISPATCH_VERIFIED') {
             setAlerts(prev => prev.map(a => 
@@ -235,6 +256,7 @@ export function AlertProvider({ children }) {
     ambulanceLocations,
     wsStatus,
     adminSettings,
+    updateAdminSettings,
     fleetVersion,
     verifyAlert,
     dismissAlert,

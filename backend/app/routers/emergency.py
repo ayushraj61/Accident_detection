@@ -44,6 +44,12 @@ def run_simulator(video_path: str, lat: float, lng: float):
 @router.post("/alert")
 async def receive_edge_alert(alert: dict, db: Session = Depends(database.get_db)):
     alert_id = alert.get("id")
+    
+    # Calculate auto-dispatch deadline
+    admin = db.query(db_models.SystemAdmin).first()
+    window = admin.auto_dispatch_window if admin else 2
+    auto_dispatch_at = datetime.datetime.utcnow() + datetime.timedelta(minutes=window)
+    
     new_incident = db_models.Incident(
         id=alert_id,
         severity=alert.get("severity", "MEDIUM"),
@@ -53,7 +59,8 @@ async def receive_edge_alert(alert: dict, db: Session = Depends(database.get_db)
         status="pending",
         video_clip_url=alert.get("video_clip_url"),
         thumbnail_b64=alert.get("thumbnail_b64"),
-        created_at=datetime.datetime.utcnow()
+        created_at=datetime.datetime.utcnow(),
+        auto_dispatch_at=auto_dispatch_at
     )
     hospitals = db.query(db_models.Hospital).all()
     class AlertObj: pass
@@ -73,6 +80,19 @@ async def receive_edge_alert(alert: dict, db: Session = Depends(database.get_db)
     }
     await manager.broadcast(payload)
     return {"status": "success"}
+
+@router.post("/admin/settings")
+async def update_admin_settings(settings: dict, db: Session = Depends(database.get_db)):
+    admin = db.query(db_models.SystemAdmin).first()
+    if not admin:
+        admin = db_models.SystemAdmin(username="admin", password_hash="dummy")
+        db.add(admin)
+    
+    if "auto_dispatch_window" in settings:
+        admin.auto_dispatch_window = settings["auto_dispatch_window"]
+    
+    db.commit()
+    return {"status": "success", "window": admin.auto_dispatch_window}
 
 @router.get("/incidents", response_model=List[schemas.IncidentResponse])
 def get_incidents(db: Session = Depends(database.get_db)):
