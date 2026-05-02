@@ -73,6 +73,7 @@ class Incident(Base):
     thumbnail_b64 = Column(String, nullable=True)
     assigned_fleet = Column(String, nullable=True)
     hospital_status = Column(String, default="notified")
+    ambulance_status = Column(String, default="idle") # enroute, onscene, enroute_hospital, arrived_hospital
     
     hospital_id = Column(Integer, ForeignKey("hospitals.id"), nullable=True)
     eta_minutes = Column(Integer, nullable=True)

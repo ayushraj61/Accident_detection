@@ -90,6 +90,7 @@ class IncidentResponse(BaseModel):
     thumbnail_b64: Optional[str] = None
     hospital_id: Optional[int] = None
     eta_minutes: Optional[int] = None
+    ambulance_status: Optional[str] = None
     created_at: Optional[datetime] = None
     auto_dispatch_at: Optional[datetime] = None
     class Config:

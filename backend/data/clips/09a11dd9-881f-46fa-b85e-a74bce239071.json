@@ -1,0 +1,14 @@
+{
+  "event_id": "09a11dd9-881f-46fa-b85e-a74bce239071",
+  "camera_id": "CAM_001",
+  "timestamp": "2026-05-02T07:53:49.040609+00:00",
+  "frame_idx": 35,
+  "confidence": 0.65,
+  "severity": "medium",
+  "location": {
+    "lat": 40.7128,
+    "lng": -74.006
+  },
+  "clip_path": "/tmp/ai_aiders_clips/09a11dd9-881f-46fa-b85e-a74bce239071.mp4",
+  "status": "READY"
+}

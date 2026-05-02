@@ -39,4 +39,4 @@ TARGET_FPS = 25
 
 # Paths
 MODEL_SAVE_PATH = "models/saved/lstm_classifier.pth"
-CLIPS_OUTPUT_DIR = "/tmp/ai_aiders_clips"
+CLIPS_OUTPUT_DIR = "../backend/data/clips"

@@ -39,7 +39,7 @@ export function AlertProvider({ children }) {
             matched_hospitals: [],
             hospital_standby: 'Hospital Notified',
             status: alert.status || 'pending',
-            ambulanceStatus: alert.assigned_fleet ? 'dispatched' : 'idle',
+            ambulanceStatus: alert.ambulance_status || 'idle',
             hospitalStatus: alert.hospital_status || 'notified',
             impact_scale: alert.impact_scale,
             incident_type: alert.incident_type
@@ -80,7 +80,7 @@ export function AlertProvider({ children }) {
               thumbnail_b64: alert.thumbnail_b64 || null,
               hospital_id: alert.hospital_id,
               status: 'pending',
-              ambulanceStatus: 'idle',
+              ambulanceStatus: alert.ambulance_status || 'idle',
               hospitalStatus: 'notified',
               dispatched_ambulance_names: [],
               impact_scale: alert.impact_scale,
@@ -88,6 +88,14 @@ export function AlertProvider({ children }) {
             };
             audioRef.current.play().catch(() => {});
             setAlerts(prev => [newAlert, ...prev]);
+          } else if (payload.event === 'INCIDENT_UPDATED') {
+            const updated = payload.incident;
+            setAlerts(prev => prev.map(a => a.id === updated.id ? {
+                ...a,
+                ambulanceStatus: updated.ambulance_status || a.ambulanceStatus,
+                hospitalStatus: updated.hospital_status || a.hospitalStatus,
+                eta_minutes: updated.eta_minutes
+            } : a));
           } else if (payload.event === 'DISPATCH_VERIFIED') {
             setAlerts(prev => prev.map(a => 
               a.id === payload.alert_id 

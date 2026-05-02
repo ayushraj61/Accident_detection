@@ -170,13 +170,20 @@ async def update_incident_eta(incident_id: str, eta: int, db: Session = Depends(
 @router.post("/ambulance/status")
 async def update_ambulance_status(payload: dict, db: Session = Depends(database.get_db)):
     alert_id = payload.get("alert_id")
-    new_status = payload.get("status")
+    status = payload.get("status")
+    
     incident = db.query(db_models.Incident).filter(db_models.Incident.id == alert_id).first()
     if incident:
-        # In a real app, we might update a specific column, but for now we broadcast
-        await manager.broadcast({"event": "AMBULANCE_STATUS_UPDATED", "alert_id": alert_id, "status": new_status})
+        incident.ambulance_status = status
+        db.commit()
+        
+        await manager.broadcast({
+            "event": "AMBULANCE_STATUS_UPDATED",
+            "alert_id": alert_id,
+            "status": status
+        })
         return {"status": "success"}
-    return {"status": "error"}
+    return {"status": "error", "message": "Incident not found"}
 
 @router.post("/update-location")
 async def update_ambulance_location(payload: dict, db: Session = Depends(database.get_db)):

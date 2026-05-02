@@ -27,8 +27,8 @@ app.include_router(hospital.router)
 app.include_router(ambulance.router)
 app.include_router(admin.router)
 
-# Serve video clips from the detection output directory
-clips_dir = "/tmp/ai_aiders_clips"
+# Serve video clips from the permanent data directory
+clips_dir = "data/clips"
 os.makedirs(clips_dir, exist_ok=True)
 app.mount("/clips", StaticFiles(directory=clips_dir), name="clips")
 

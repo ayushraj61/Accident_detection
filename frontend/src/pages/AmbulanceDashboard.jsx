@@ -148,8 +148,8 @@ export default function AmbulanceDashboard() {
     }
   };
 
-  const isNavigating = driverStatus === 'accepted' || driverStatus === 'onscene' || driverStatus === 'enroute' || driverStatus === 'arrived_hospital';
-  const isReturning = driverStatus === 'enroute' || driverStatus === 'arrived_hospital';
+  const isNavigating = ['enroute', 'onscene', 'enroute_hospital', 'arrived_hospital'].includes(driverStatus);
+  const isReturning = ['enroute_hospital', 'arrived_hospital'].includes(driverStatus);
   
   const hospitalCoords = [user?.hospital_lat || 28.6139, user?.hospital_lng || 77.2090];
   const destination = isReturning ? hospitalCoords : activeAlert ? [activeAlert.locationRaw.lat, activeAlert.locationRaw.lng] : null;
@@ -249,15 +249,13 @@ export default function AmbulanceDashboard() {
                      <img src="https://cdn-icons-png.flaticon.com/512/2991/2991148.png" style={{width: 18}} alt="G"/>
                      NAVIGATE TO {isReturning ? 'HOSPITAL' : 'SCENE'}
                    </button>
-                </div>
-
-                <div className="card" style={{flex: 1}}>
+                                <div className="card" style={{flex: 1}}>
                    <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
                       {[
                         { step: 1, label: 'Accept Call', done: isNavigating, active: driverStatus === 'dispatched' },
-                        { step: 2, label: 'Arrive at Scene', done: driverStatus === 'onscene' || isReturning, active: driverStatus === 'accepted' },
+                        { step: 2, label: 'Arrive at Scene', done: driverStatus === 'onscene' || isReturning, active: driverStatus === 'enroute' },
                         { step: 3, label: 'Load Patient', done: isReturning, active: driverStatus === 'onscene' },
-                        { step: 4, label: 'At Hospital', done: driverStatus === 'arrived_hospital', active: driverStatus === 'enroute' }
+                        { step: 4, label: 'At Hospital', done: driverStatus === 'arrived_hospital', active: driverStatus === 'enroute_hospital' }
                       ].map(s => (
                         <div key={s.step} style={{display: 'flex', alignItems: 'center', gap: '1rem', opacity: s.active ? 1 : s.done ? 0.6 : 0.2}}>
                            <div style={{width: 24, height: 24, borderRadius: '50%', background: s.done ? '#10b981' : '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '0.7rem'}}>
@@ -269,13 +267,14 @@ export default function AmbulanceDashboard() {
                    </div>
 
                    <div style={{marginTop: '2rem'}}>
-                      {(driverStatus === 'idle' || driverStatus === 'dispatched') && <button className="primary" style={{width: '100%', padding: '15px'}} onClick={() => handleStatusUpdate(activeAlert.id, 'accepted')}>START NAVIGATION</button>}
-                      {driverStatus === 'accepted' && <button className="primary" style={{width: '100%', padding: '15px', background: '#3b82f6'}} onClick={() => handleStatusUpdate(activeAlert.id, 'onscene')}>I HAVE ARRIVED AT SCENE</button>}
-                      {driverStatus === 'onscene' && <button className="primary" style={{width: '100%', padding: '15px', background: '#8b5cf6'}} onClick={() => handleStatusUpdate(activeAlert.id, 'enroute')}>PATIENT LOADED: TO HOSPITAL</button>}
-                      {driverStatus === 'enroute' && <button className="primary" style={{width: '100%', padding: '15px', background: '#1e40af'}} onClick={() => handleStatusUpdate(activeAlert.id, 'arrived_hospital')}>ARRIVED AT HOSPITAL</button>}
+                      {(driverStatus === 'idle' || driverStatus === 'dispatched') && <button className="primary" style={{width: '100%', padding: '15px'}} onClick={() => handleStatusUpdate(activeAlert.id, 'enroute')}>START NAVIGATION</button>}
+                      {driverStatus === 'enroute' && <button className="primary" style={{width: '100%', padding: '15px', background: '#3b82f6'}} onClick={() => handleStatusUpdate(activeAlert.id, 'onscene')}>I HAVE ARRIVED AT SCENE</button>}
+                      {driverStatus === 'onscene' && <button className="primary" style={{width: '100%', padding: '15px', background: '#8b5cf6'}} onClick={() => handleStatusUpdate(activeAlert.id, 'enroute_hospital')}>PATIENT LOADED: TO HOSPITAL</button>}
+                      {driverStatus === 'enroute_hospital' && <button className="primary" style={{width: '100%', padding: '15px', background: '#1e40af'}} onClick={() => handleStatusUpdate(activeAlert.id, 'arrived_hospital')}>ARRIVED AT HOSPITAL</button>}
                       {driverStatus === 'arrived_hospital' && <button className="primary" style={{width: '100%', padding: '15px', background: '#10b981'}} onClick={() => handleStatusUpdate(activeAlert.id, 'cleared')}>MISSION COMPLETE</button>}
                    </div>
                 </div>
+  </div>
              </div>
            )}
 
