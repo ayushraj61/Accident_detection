@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:alpine
+    container_name: AI-AIDERS-redis
+    ports:
+      - "6379:6379"
+
+  osrm-backend:
+    image: osrm/osrm-backend:latest
+    container_name: AI-AIDERS-osrm
+    volumes:
+      - ./docker/osrm-data:/data
+    command: "osrm-routed --algorithm mld /data/map.osrm"
+    ports:
+      - "5000:5000"
+
+  backend:
+    build: 
+      context: ./backend
+    container_name: AI-AIDERS-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - OSRM_URL=http://osrm-backend:5000
+    depends_on:
+      - redis
+      - osrm-backend
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: AI-AIDERS-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_BACKEND_URL=http://localhost:8000
+    depends_on:
+      - backend

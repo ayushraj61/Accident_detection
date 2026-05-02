@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  osrm-backend:
+    image: osrm/osrm-backend:latest
+    container_name: AI-AIDERS-osrm
+    restart: always
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./osrm-data:/data
+    command: "osrm-routed --algorithm mld /data/map.osrm"

@@ -1,0 +1,14 @@
+{
+  "event_id": "03b799e3-ec08-4634-b6ee-113ec514bcd1",
+  "camera_id": "CAM_001",
+  "timestamp": "2026-04-28T13:49:50.781058+00:00",
+  "frame_idx": 1263,
+  "confidence": 0.65,
+  "severity": "medium",
+  "location": {
+    "lat": 40.7128,
+    "lng": -74.006
+  },
+  "clip_path": "data/clips/03b799e3-ec08-4634-b6ee-113ec514bcd1.mp4",
+  "status": "READY"
+}

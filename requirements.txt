@@ -1,0 +1,17 @@
+# AI-AIDERS — Detection Module Dependencies
+
+# Core AI
+ultralytics==8.1.0          # YOLOv8
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Computer Vision
+opencv-python==4.9.0.80
+
+# Data & Training
+numpy>=1.24.0
+scikit-learn>=1.3.0
+tqdm>=4.66.0
+
+# Utilities
+Pillow>=10.0.0
