@@ -1,7 +1,4 @@
-"""
-AI-AIDERS — Detection Module Configuration
-All tunable parameters in one place.
-"""
+# Detection config - all hyperparameters in one place
 
 # YOLOv8 config
 YOLO_MODEL_PATH = "../yolov8n.pt"   # swap to yolov8x.pt for higher accuracy

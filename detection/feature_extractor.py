@@ -1,19 +1,9 @@
 """
-AI-AIDERS — Frame Feature Extractor
+Feature extraction from YOLO detections.
 
-Converts raw YOLO detections into a fixed-size numerical feature vector.
-This is what the LSTM learns from — not raw pixels.
-
-Feature vector (9 values per frame):
-  0. vehicle_count          — how many vehicles detected
-  1. max_iou                — max overlap between any two vehicles (collision indicator)
-  2. avg_confidence         — average detection confidence
-  3. velocity_mean          — average vehicle movement since last frame
-  4. velocity_max           — maximum single vehicle movement
-  5. acceleration           — change in velocity (sudden stop = accident)
-  6. aspect_ratio_variance  — variance in vehicle shapes (deformation indicator)
-  7. scene_coverage         — total bounding box area / frame area
-  8. new_stationary_count   — vehicles that were moving, now stopped
+Converts per-frame detections into a 9-value feature vector
+that captures things like vehicle overlap, velocity, acceleration, etc.
+These features are what the LSTM actually learns from.
 """
 
 import numpy as np
@@ -24,10 +14,7 @@ from config import FEATURE_DIM, SEQUENCE_LENGTH
 
 
 class FrameFeatureExtractor:
-    """
-    Extracts a 9-dimensional feature vector from each frame's detections.
-    Maintains state from previous frame to compute velocity and acceleration.
-    """
+    """Extracts a 9-dim feature vector from each frame's detections."""
 
     def __init__(self):
         self._prev_centers: dict = {}   # Vehicle centers in prev frame by track_id
@@ -39,12 +26,7 @@ class FrameFeatureExtractor:
         self._prev_velocity = 0.0
 
     def extract(self, frame_dets: FrameDetections) -> np.ndarray:
-        """
-        Extract feature vector from a single frame's detections.
-
-        Returns:
-            np.ndarray of shape (FEATURE_DIM,) = (9,)
-        """
+        """Extract 9 features from one frame's detections."""
         dets = frame_dets.detections
         features = np.zeros(FEATURE_DIM, dtype=np.float32)
 
@@ -103,9 +85,7 @@ class FrameFeatureExtractor:
         return np.array([[d.center_x, d.center_y] for d in dets], dtype=np.float32)
 
     def _compute_velocity(self, prev_centers: dict, curr_centers: dict):
-        """
-        Compute velocity tightly based on tracked vehicle IDs.
-        """
+        """Compute avg and max velocity using tracked vehicle positions."""
         velocities = []
         for track_id, curr_center in curr_centers.items():
             if track_id in prev_centers:
@@ -134,10 +114,7 @@ class FrameFeatureExtractor:
 
 
 class SequenceBuffer:
-    """
-    Maintains a sliding window of frame feature vectors.
-    When buffer is full (SEQUENCE_LENGTH frames), yields a sequence for LSTM.
-    """
+    """Sliding window buffer. Collects SEQUENCE_LENGTH frames then yields to LSTM."""
 
     def __init__(self, sequence_length: int = SEQUENCE_LENGTH):
         self.sequence_length = sequence_length
@@ -152,12 +129,7 @@ class SequenceBuffer:
         return len(self._buffer) == self.sequence_length
 
     def get_sequence(self) -> np.ndarray:
-        """
-        Get the current sequence as numpy array.
-
-        Returns:
-            np.ndarray of shape (SEQUENCE_LENGTH, FEATURE_DIM)
-        """
+        """Return current buffer contents as a numpy array."""
         return np.array(list(self._buffer), dtype=np.float32)
 
     def reset(self):

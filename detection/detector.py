@@ -1,8 +1,6 @@
 """
-AI-AIDERS — YOLOv8 Vehicle Detector
-
-Wraps YOLOv8 to detect vehicles in a single frame.
-Returns structured detection results — not raw YOLO output.
+Vehicle detector using YOLOv8.
+Filters only vehicle classes from COCO and returns normalized bounding boxes.
 """
 
 import numpy as np
@@ -65,10 +63,7 @@ class FrameDetections:
 
 
 class VehicleDetector:
-    """
-    Wraps YOLOv8 for vehicle-only detection.
-    Filters out non-vehicle classes automatically.
-    """
+    """Runs YOLOv8 and keeps only vehicle detections."""
 
     def __init__(self, model_path: str = YOLO_MODEL_PATH):
         print(f"[Detector] Loading YOLOv8 from {model_path}")
@@ -77,16 +72,7 @@ class VehicleDetector:
         print("[Detector] Model ready.")
 
     def detect(self, frame: np.ndarray, frame_idx: int = 0) -> FrameDetections:
-        """
-        Run detection on a single frame.
-
-        Args:
-            frame: BGR numpy array (OpenCV format)
-            frame_idx: Frame number in the video sequence
-
-        Returns:
-            FrameDetections with all vehicle detections
-        """
+        """Run detection on a single frame and return filtered vehicle detections."""
         h, w = frame.shape[:2]
         results = self.model.track(
             frame,
@@ -133,10 +119,7 @@ def compute_iou(d1: Detection, d2: Detection) -> float:
 
 
 def max_pairwise_iou(detections: List[Detection]) -> float:
-    """
-    Find the maximum IoU between any two vehicles in the frame.
-    High IoU = vehicles overlapping = potential collision.
-    """
+    """Find the max IoU between any two vehicles. High overlap = possible collision."""
     if len(detections) < 2:
         return 0.0
 

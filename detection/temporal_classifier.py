@@ -1,13 +1,7 @@
 """
-AI-AIDERS — LSTM Temporal Classifier
-
-Takes a sequence of 16 frame feature vectors → outputs accident probability.
-This is the model we train on Google Colab.
-
-Architecture:
-  Input:  (batch, 16 frames, 9 features)
-  LSTM:   2 layers, hidden_size=64
-  Output: (batch, 2) → [not_accident, accident]
+LSTM-based temporal classifier for accident detection.
+Takes 16-frame feature sequences and outputs accident probability.
+Trained on Google Colab with T4 GPU.
 """
 
 import torch
@@ -26,14 +20,7 @@ from config import (
 
 
 class AccidentLSTM(nn.Module):
-    """
-    LSTM-based binary classifier: accident vs non-accident.
-
-    Why LSTM over simple MLP?
-    A single frame can't tell accident from hard braking.
-    LSTM sees the SEQUENCE — the pattern over time — which is
-    what distinguishes a collision from a normal event.
-    """
+    """2-layer LSTM with attention for binary accident classification."""
 
     def __init__(
         self,
@@ -74,15 +61,7 @@ class AccidentLSTM(nn.Module):
                 nn.init.zeros_(param)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        Forward pass.
-
-        Args:
-            x: Tensor of shape (batch_size, seq_len, feature_dim)
-
-        Returns:
-            logits: Tensor of shape (batch_size, 2)
-        """
+        """Forward pass: sequence -> logits."""
         lstm_out, _ = self.lstm(x)
         # lstm_out: (batch, seq_len, hidden_size)
 
@@ -103,11 +82,7 @@ class AccidentLSTM(nn.Module):
 
 
 class AccidentClassifier:
-    """
-    Inference wrapper for AccidentLSTM.
-    Loads the trained model and runs inference on sequences.
-    Falls back to heuristic IoU-based detection if model is untrained.
-    """
+    """Wrapper that loads the LSTM model or falls back to heuristic detection."""
 
     def __init__(self, model_path: str = MODEL_SAVE_PATH, device: str = "auto"):
         if device == "auto":
@@ -138,17 +113,14 @@ class AccidentClassifier:
             return False
 
     def predict(self, sequence: np.ndarray) -> dict:
-        """
-        Run inference on a sequence of frame features.
-        Uses trained LSTM if available, otherwise falls back to heuristic analysis.
-        """
+        """Run prediction - uses LSTM if trained, otherwise heuristic rules."""
         if self._model_trained:
             return self._lstm_predict(sequence)
         else:
             return self._heuristic_predict(sequence)
 
     def _lstm_predict(self, sequence: np.ndarray) -> dict:
-        """LSTM-based prediction (original logic)."""
+        """Prediction using the trained LSTM model."""
         x = torch.FloatTensor(sequence).unsqueeze(0).to(self.device)
         probs = self.model.predict_proba(x)
         accident_prob = float(probs[0, 1])
@@ -164,24 +136,8 @@ class AccidentClassifier:
 
     def _heuristic_predict(self, sequence: np.ndarray) -> dict:
         """
-        Heuristic-based accident detection using extracted feature vectors.
-        
-        Feature indices (from feature_extractor.py):
-          0: vehicle_count (normalized 0-1)
-          1: max_iou (collision indicator — HIGH = vehicles overlapping!)
-          2: avg_confidence
-          3: velocity_mean
-          4: velocity_max  
-          5: acceleration (sudden deceleration = crash)
-          6: aspect_ratio_variance (vehicle deformation)
-          7: scene_coverage
-          8: new_stationary_count (vehicles that stopped moving)
-        
-        Accident signature:
-          - High IoU in recent frames (vehicles physically overlapping)
-          - Sudden velocity drop (moving → stopped)
-          - High acceleration spike (sudden deceleration)
-          - Increased stationary count after motion
+        Rule-based fallback when LSTM isn't available.
+        Scores based on IoU spikes, velocity drops, sudden braking, etc.
         """
         # Analyze the last 8 frames (most recent half of the sequence)
         recent = sequence[-8:]
@@ -242,7 +198,7 @@ class AccidentClassifier:
         
         if confidence > 0.3:
             print(f"[Heuristic] IoU={peak_iou:.3f} accel={peak_accel:.3f} vel_drop={velocity_drop:.3f} "
-                  f"stationary={avg_stationary:.3f} → score={confidence:.3f} {'🚨 ACCIDENT' if is_accident else ''}")
+                  f"stationary={avg_stationary:.3f} → score={confidence:.3f} {'ACCIDENT' if is_accident else ''}")
         
         return {
             "is_accident": is_accident,

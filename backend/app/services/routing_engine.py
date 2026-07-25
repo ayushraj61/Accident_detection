@@ -5,12 +5,7 @@ from typing import Tuple, Optional
 OSRM_URL = "http://127.0.0.1:5000"
 
 async def get_route(source: Location, destination: Location) -> Tuple[Optional[float], Optional[float]]:
-    """
-    Coordinates with local OSRM Docker container to get exact street routing.
-    
-    Returns:
-        Tuple of (distance_in_km, duration_in_minutes)
-    """
+    """Get driving distance (km) and duration (min) from OSRM."""
     try:
         # OSRM expects coordinates in order: {longitude},{latitude}
         loc_str = f"{source.lon},{source.lat};{destination.lon},{destination.lat}"

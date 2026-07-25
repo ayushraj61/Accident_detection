@@ -1,17 +1,11 @@
 """
-AI-AIDERS — LSTM Training Script
+Training script for the LSTM classifier.
+Run on Google Colab with GPU for best results.
 
-Run this on Google Colab (free T4 GPU).
-Trains the AccidentLSTM on extracted feature sequences.
-
-Before running:
-  1. Prepare dataset using prepare_dataset.py (run locally)
-  2. Upload data/processed/ folder to Colab or Google Drive
-  3. Run this script on Colab
-
-Output:
-  models/saved/lstm_classifier.pth  — trained weights
-  models/saved/training_metrics.json — accuracy, loss curves
+Steps:
+  1. Run prepare_dataset.py locally first
+  2. Upload data/processed/ to Colab
+  3. Run this script
 """
 
 import os
@@ -47,14 +41,7 @@ DATA_DIR = "data/processed"
 
 
 class AccidentDataset(Dataset):
-    """
-    Loads preprocessed feature sequences from disk.
-
-    Expected structure:
-      data/processed/
-        sequences.npy     — shape (N, SEQUENCE_LENGTH, FEATURE_DIM)
-        labels.npy        — shape (N,) — 0=normal, 1=accident
-    """
+    """Loads sequences.npy and labels.npy from disk."""
 
     def __init__(self, data_dir: str = DATA_DIR):
         seq_path = os.path.join(data_dir, "sequences.npy")
@@ -84,10 +71,7 @@ class AccidentDataset(Dataset):
 
 
 def get_class_weights(dataset: AccidentDataset) -> torch.Tensor:
-    """
-    Compute class weights to handle imbalanced dataset.
-    Accident clips are rare — we need to weight them higher.
-    """
+    """Class weights for imbalanced data (accidents are rare)."""
     labels = dataset.labels
     n_total = len(labels)
     n_accident = labels.sum()

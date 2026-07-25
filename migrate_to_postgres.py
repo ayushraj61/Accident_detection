@@ -15,14 +15,14 @@ SQLITE_URL = "sqlite:///backend/accident_detection.db"
 POSTGRES_URL = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
 
 def migrate():
-    print("🚀 Starting Migration: SQLite -> PostgreSQL")
+    print("Starting migration: SQLite -> PostgreSQL")
     
     # 1. Connect to both databases
     sqlite_engine = create_engine(SQLITE_URL)
     postgres_engine = create_engine(POSTGRES_URL)
     
     # 2. Create tables in PostgreSQL using your models
-    print("📦 Recreating schema in PostgreSQL...")
+    print("Creating tables in PostgreSQL...")
     db_models.Base.metadata.create_all(postgres_engine)
     
     # 3. Setup Sessions
@@ -43,7 +43,7 @@ def migrate():
     try:
         for model in tables:
             table_name = model.__tablename__
-            print(f"🚚 Migrating table: {table_name}...")
+            print(f"Migrating table: {table_name}...")
             
             # Fetch all rows from SQLite
             items = sqlite_db.query(model).all()
@@ -59,13 +59,13 @@ def migrate():
                 postgres_db.merge(item)
             
             postgres_db.commit()
-            print(f"   ✅ Successfully copied {len(items)} rows.")
+            print(f"   Copied {len(items)} rows.")
             
-        print("\n🎉 MIGRATION COMPLETE!")
-        print("Your data is now safely stored in PostgreSQL.")
+        print("\nMigration complete!")
+        print("Data is now in PostgreSQL.")
         
     except Exception as e:
-        print(f"\n❌ MIGRATION FAILED: {str(e)}")
+        print(f"\nMigration failed: {str(e)}")
         postgres_db.rollback()
     finally:
         sqlite_db.close()

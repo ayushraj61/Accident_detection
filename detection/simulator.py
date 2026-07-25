@@ -1,14 +1,9 @@
 """
-AI-AIDERS — Edge Device Simulator
-
-Simulates what runs on an NVIDIA Jetson at a road camera.
-Feed it any video file (dashcam, CCTV) and it runs the full detection pipeline:
-
-  Frame → YOLO → Features → Sequence Buffer → LSTM → Event Payload
+Edge device simulator - runs the full detection pipeline on a video file.
 
 Usage:
   python simulator.py --video path/to/video.mp4 --camera-id CAM_001
-  python simulator.py --video path/to/video.mp4 --camera-id CAM_001 --show
+  python simulator.py --video path/to/video.mp4 --show
 """
 
 import cv2
@@ -46,20 +41,10 @@ def run_simulation(
     show: bool = False,
     model_path: str = MODEL_SAVE_PATH,
 ):
-    """
-    Main simulation loop.
-
-    Args:
-        video_path:  Path to input video file
-        camera_id:   Unique ID for this camera
-        camera_lat:  Camera GPS latitude
-        camera_lng:  Camera GPS longitude
-        show:        Show live detection window
-        model_path:  Path to trained LSTM weights
-    """
+    """Main loop - reads video, runs YOLO + features + LSTM, publishes alerts."""
 
     print(f"\n{'='*60}")
-    print("  AI-AIDERS — Edge Detection Simulator")
+    print("  AI-AIDERS Edge Simulator")
     print(f"{'='*60}")
     print(f"  Video:     {video_path}")
     print(f"  Camera:    {camera_id} ({camera_lat}, {camera_lng})")

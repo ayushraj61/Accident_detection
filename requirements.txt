@@ -1,4 +1,4 @@
-# AI-AIDERS — Detection Module Dependencies
+# Detection module deps
 
 # Core AI
 ultralytics==8.1.0          # YOLOv8

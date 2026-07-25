@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data & Models (too large for git)
+*.pt
+data/
+backend/data/clips/
+detection/models/saved/
+detection/test.mp4
+
+# Generated files
+AI_AIDERS_Interview_Guide.html
+AI_AIDERS_Interview_Guide.pdf
+generate_pdf.py
+detection.zip
+
+# Credentials
+kaggle.json
+
+# IDE
+.vscode/
+.idea/

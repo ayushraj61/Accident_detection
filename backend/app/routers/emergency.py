@@ -43,6 +43,7 @@ def run_simulator(video_path: str, lat: float, lng: float):
 
 @router.post("/alert")
 async def receive_edge_alert(alert: dict, db: Session = Depends(database.get_db)):
+    print(f"[DEBUG] Incoming Alert Payload: {json.dumps(alert, indent=2)}")
     alert_id = alert.get("id")
     
     # Calculate auto-dispatch deadline
@@ -109,7 +110,7 @@ async def assign_ambulances(payload: dict, db: Session = Depends(database.get_db
         incident = db.query(db_models.Incident).filter(db_models.Incident.id == alert_id).first()
         if not incident: return {"status": "error", "message": "Incident not found"}
         
-        # 🛡️ SECURITY CHECK: Is this case already claimed?
+        # prevent double-dispatch
         if incident.status == "dispatched" or incident.assigned_fleet:
              return {"status": "error", "message": "This case has already been claimed by another hospital."}
              
@@ -142,7 +143,7 @@ async def update_hospital_status(payload: dict, db: Session = Depends(database.g
     incident = db.query(db_models.Incident).filter(db_models.Incident.id == alert_id).first()
     if incident:
         incident.hospital_status = new_status
-        # FORCE RELEASE FLEET ON ADMISSION
+        # release ambulances when patient is admitted
         if new_status == "admitted" and incident.assigned_fleet:
             amb_names = [n.strip() for n in incident.assigned_fleet.split(',')]
             db.query(db_models.Ambulance).filter(db_models.Ambulance.unit_name.in_(amb_names)).update({"is_available": True}, synchronize_session=False)

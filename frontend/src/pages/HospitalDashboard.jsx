@@ -59,12 +59,19 @@ export default function HospitalDashboard() {
   // IST Formatter Utility
   const formatToIST = (dateString) => {
     if (!dateString) return '--:--:--';
-    // If it's just a time string like "13:47:24", we treat it as today
+    // If it's already a formatted time string (has am/pm), just return it
+    if (typeof dateString === 'string' && (dateString.toLowerCase().includes('am') || dateString.toLowerCase().includes('pm'))) {
+      return dateString;
+    }
+    
     let date = new Date(dateString);
     if (isNaN(date.getTime())) {
         const today = new Date().toISOString().split('T')[0];
         date = new Date(`${today}T${dateString}`);
     }
+    
+    if (isNaN(date.getTime())) return dateString; // Last resort fallback
+
     return new Intl.DateTimeFormat('en-IN', {
       timeZone: 'Asia/Kolkata',
       hour: '2-digit',
@@ -121,7 +128,13 @@ export default function HospitalDashboard() {
               </div>
             ) : (
               filteredAlerts.map(patient => (
-                <div key={patient.id} className="card alert-card critical" style={{borderLeft: '4px solid' + (viewFilter === 'new' ? 'var(--accent-red)' : viewFilter === 'ongoing' ? 'var(--accent-blue)' : '#10b981')}}>
+                <div key={patient.id} className="card alert-card critical" 
+                  style={{
+                    borderLeft: '4px solid' + (viewFilter === 'new' ? 'var(--accent-red)' : viewFilter === 'ongoing' ? 'var(--accent-blue)' : '#10b981'),
+                    position: 'relative',
+                    zIndex: openDropdown === patient.id ? 100 : 1,
+                    overflow: 'visible'
+                  }}>
                   <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '1rem'}}>
                     <div>
                       <h3 style={{color: 'white', fontSize: '1.1rem'}}>🚨 {patient.severity} TRAUMA DETECTED</h3>
@@ -202,7 +215,7 @@ export default function HospitalDashboard() {
                             setOpenDropdown(null);
                             setTimeout(fetchAmbulances, 500); 
                           }}>
-                          🚀 Dispatch Selected Fleet
+                          Dispatch Selected Fleet
                         </button>
                       </div>
                     )}

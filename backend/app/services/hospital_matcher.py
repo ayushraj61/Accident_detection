@@ -10,10 +10,7 @@ def haversine(lat1, lng1, lat2, lng2) -> float:
     return R * c
 
 def rank_hospitals(alert, hospitals) -> list:
-    """
-    Ranks hospitals based on synopsis weights:
-    distance 30%, bed availability 25%, specialty match 20%, historical acceptance rate 15%, current ER load 10%.
-    """
+    """Rank hospitals by weighted score (distance, beds, ICU, acceptance, ER load)."""
     scored_hospitals = []
     
     # Alert usually has lat/lng or location.lat/location.lng

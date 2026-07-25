@@ -1,12 +1,6 @@
 """
-AI-AIDERS — Event Generator
-
-When the LSTM confirms an accident:
-  1. Extracts a video clip (5s before + 5s after the event)
-  2. Generates a structured event payload (JSON-ready dict)
-  3. Saves clip to disk
-
-This payload is what gets published to Kafka in Phase 2.
+Event generator - creates event payloads and saves video clips
+when the classifier detects an accident.
 """
 
 import cv2
@@ -27,10 +21,7 @@ from config import (
 
 
 class RollingFrameBuffer:
-    """
-    Keeps last N seconds of frames in memory.
-    Used to extract the clip before the accident moment.
-    """
+    """Keeps last N seconds of video frames in memory for clip extraction."""
 
     def __init__(self, fps: int = TARGET_FPS, buffer_seconds: int = ROLLING_BUFFER_SECONDS):
         max_frames = fps * buffer_seconds
@@ -48,9 +39,7 @@ class RollingFrameBuffer:
 
 
 class EventGenerator:
-    """
-    Manages clip extraction and event payload generation.
-    """
+    """Handles clip extraction and event payload creation."""
 
     def __init__(
         self,
@@ -74,11 +63,7 @@ class EventGenerator:
         self._pending_event: Optional[dict] = None
 
     def push_frame(self, frame: np.ndarray):
-        """
-        Push every frame here.
-        After accident detected, call generate_event() which triggers
-        post-event frame collection automatically.
-        """
+        """Buffer every frame. Also collects post-event frames if capturing."""
         self.frame_buffer.push(frame)
 
         if self._capturing_post:
@@ -86,26 +71,8 @@ class EventGenerator:
             if len(self._post_event_frames) >= self._post_frames_needed:
                 self._finalize_event()
 
-    def generate_event(
-        self,
-        confidence: float,
-        severity: str,
-        frame_idx: int,
-    ) -> dict:
-        """
-        Called when LSTM detects an accident.
-        Starts collecting post-event frames.
-        Returns a preliminary event payload immediately.
-        The clip path will be None until finalized.
-
-        Args:
-            confidence: LSTM accident probability
-            severity:   "low" / "medium" / "high"
-            frame_idx:  Frame number in the video
-
-        Returns:
-            event dict (clip_path will be populated after post-event frames collected)
-        """
+    def generate_event(self, confidence: float, severity: str, frame_idx: int) -> dict:
+        """Create an event payload and start collecting post-accident frames."""
         event_id = str(uuid.uuid4())
         timestamp = datetime.now(timezone.utc).isoformat()
 

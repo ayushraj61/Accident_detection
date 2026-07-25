@@ -7,11 +7,12 @@ from app import db_models
 import asyncio
 import os
 from app.redis_listener import listen_to_redis
+from app.services.auto_verifier import run_auto_verifier
 
 # Initialize DB tables
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="AI-AIDERS Backend API", description="Core dispatch and matching engine")
+app = FastAPI(title="AI-AIDERS API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -36,9 +37,9 @@ app.mount("/clips", StaticFiles(directory=clips_dir), name="clips")
 async def startup_event():
     print("[Backend] Connecting async workers...")
     asyncio.create_task(listen_to_redis())
-    # Optional: Seed demo data here if needed, or do it via a separate script
+    asyncio.create_task(run_auto_verifier())
+    # can also seed demo data via seed_db.py separately
 
 @app.get("/")
 def health_check():
-    """Simple health check endpoint"""
-    return {"status": "ok", "message": "AI-AIDERS API is running"}
+    return {"status": "ok"}

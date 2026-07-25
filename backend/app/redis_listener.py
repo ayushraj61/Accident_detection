@@ -4,10 +4,7 @@ import httpx
 import os
 
 async def listen_to_redis():
-    """
-    Background worker that simulates Kafka topic ingestion by listening to Redis PubSub.
-    When Edge AI detects an accident, it publishes here. We forward it to the main router.
-    """
+    """Listens to Redis PubSub for accident alerts and forwards them to the API."""
     try:
         import redis.asyncio as redis
         
@@ -21,13 +18,14 @@ async def listen_to_redis():
 
             async for message in pubsub.listen():
                 if message["type"] == "message":
-                    data = json.loads(message["data"])
-                    print(f"[Backend] SECONDS-LEVEL ALERT INGESTED: {data['id']}")
-                    
-                    async with httpx.AsyncClient() as client:
-                        await client.post("http://localhost:8000/api/v1/emergency/alert", json=data)
+                    try:
+                        data = json.loads(message["data"])
+                        print(f"[Backend] Alert received: {data['id']}")
+                        
+                        async with httpx.AsyncClient() as client:
+                            await client.post("http://localhost:8000/api/v1/emergency/alert", json=data)
+                    except Exception as e:
+                        print(f"[Backend Redis Listener] Error processing message: {e}")
 
-    except ImportError:
-        print("[Backend Redis Listener] Skipping: 'redis' package not installed.")
     except Exception as e:
-        print(f"[Backend Redis Listener Warning] (Safe to ignore if Redis isn't running): {e}")
+        print(f"[Backend Redis Listener Critical Error]: {e}")

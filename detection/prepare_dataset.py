@@ -1,25 +1,10 @@
 """
-AI-AIDERS — Dataset Preparation Script
-
-Run this LOCALLY before uploading to Colab.
-
-What it does:
-  1. Scans your accident and normal video folders
-  2. Runs YOLO on every frame
-  3. Extracts feature vectors
-  4. Builds sliding window sequences
-  5. Saves sequences.npy + labels.npy to data/processed/
+Dataset prep script - run locally before training.
+Scans accident/normal video folders, runs YOLO + feature extraction,
+and saves sequences.npy + labels.npy for training.
 
 Usage:
-  python prepare_dataset.py \
-    --accident-dir data/raw/accident \
-    --normal-dir data/raw/normal \
-    --output-dir data/processed
-
-Dataset folder structure expected:
-  data/raw/
-    accident/   ← video files of accidents (.mp4, .avi)
-    normal/     ← video files of normal driving (.mp4, .avi)
+  python prepare_dataset.py --accident-dir data/raw/accident --normal-dir data/raw/normal
 """
 
 import os
@@ -45,19 +30,7 @@ def extract_sequences_from_video(
     label: int,
     stride: int = 4,
 ) -> tuple:
-    """
-    Extract sequences from a single video.
-
-    Args:
-        video_path: Path to video file
-        detector:   Shared VehicleDetector instance
-        extractor:  Shared FrameFeatureExtractor instance
-        label:      0 = normal, 1 = accident
-        stride:     Extract one sequence every N frames (overlap control)
-
-    Returns:
-        (sequences, labels) as numpy arrays
-    """
+    """Extract sliding window sequences from a single video file."""
     extractor.reset()
     seq_buffer = SequenceBuffer(sequence_length=SEQUENCE_LENGTH)
 
